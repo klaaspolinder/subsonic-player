@@ -13,7 +13,8 @@ if ! git merge-base --is-ancestor origin/main upstream/main; then
   echo "::error::main has diverged from upstream; resolve it manually."
   exit 1
 fi
-git push origin refs/remotes/upstream/main:refs/heads/main
+# Use GitHub's native fork-sync API to import upstream commits and workflows.
+gh api --method POST "repos/$repo/merge-upstream" -f branch=main > /dev/null
 
 release_file=$(mktemp)
 trap 'rm -f "$release_file"' EXIT
@@ -41,8 +42,7 @@ fi
 if ! git ls-remote --exit-code origin "refs/heads/$branch" > /dev/null 2>&1; then
   # Start at the released upstream commit. GitHub merges its changes into custom
   # without removing custom-only changes; validation tests the PR merge ref.
-  git checkout -b "$branch" "$release_sha"
-  git push origin "HEAD:refs/heads/$branch"
+  gh api --method POST "repos/$repo/git/refs" -f ref="refs/heads/$branch" -f sha="$release_sha" > /dev/null
 fi
 if [ -n "$existing" ]; then
   pr=$(jq -r .number <<< "$existing")
