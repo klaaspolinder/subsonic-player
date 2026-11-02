@@ -1,0 +1,45 @@
+name: Custom validation
+on:
+  pull_request:
+    branches: [custom]
+  workflow_call:
+    inputs:
+      checkout_ref:
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      checkout_ref:
+        description: Optional commit or pull-request merge ref
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Lint, types, tests and Docker smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.checkout_ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check-types
+      - run: npm run test:once
+      - name: Build production Docker image
+        run: docker build --build-arg NODE_VERSION="$(cat .nvmrc)" -t subsonic-player:check .
+      - name: Smoke test production container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name custom-smoke -p 127.0.0.1:3000:3000 subsonic-player:check
+          trap 'docker logs custom-smoke; docker rm -f custom-smoke' EXIT
+          curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/login > /tmp/login.html
+          grep -qi '<html' /tmp/login.html

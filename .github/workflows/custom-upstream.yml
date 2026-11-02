@@ -1,0 +1,59 @@
+name: Propose upstream releases
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: upstream-release-sync
+  cancel-in-progress: false
+jobs:
+  propose:
+    if: github.repository == 'klaaspolinder/subsonic-player' && github.ref == 'refs/heads/custom'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      statuses: write
+    outputs:
+      pr: ${{ steps.sync.outputs.pr }}
+      sha: ${{ steps.sync.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: custom
+          fetch-depth: 0
+      - name: Mirror main and open release update PR
+        id: sync
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/custom-sync-upstream.sh
+  validate:
+    needs: propose
+    if: needs.propose.outputs.pr != ''
+    permissions:
+      contents: read
+    uses: ./.github/workflows/custom-ci.yml
+    with:
+      checkout_ref: refs/pull/${{ needs.propose.outputs.pr }}/merge
+  report:
+    needs: [propose, validate]
+    if: always() && needs.propose.outputs.pr != ''
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Attach validation result to update PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CHECK_SHA: ${{ needs.propose.outputs.sha }}
+          RESULT: ${{ needs.validate.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          state=failure
+          if [ "$RESULT" = success ]; then state=success; fi
+          gh api --method POST "repos/$GH_REPO/statuses/$CHECK_SHA" -f state="$state" -f context="Custom release validation" -f description="Lint, types, tests and production container: $RESULT" -f target_url="$RUN_URL"
