@@ -29,6 +29,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Check upstream sync script syntax
+        run: bash -n .github/scripts/custom-sync-upstream.sh
       - run: npm ci
       - run: npm run lint
       - run: npm run check-types
