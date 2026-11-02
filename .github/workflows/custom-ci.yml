@@ -43,5 +43,5 @@ jobs:
           set -euo pipefail
           docker run -d --name custom-smoke -p 127.0.0.1:3000:3000 subsonic-player:check
           trap 'docker logs custom-smoke; docker rm -f custom-smoke' EXIT
-          curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/login > /tmp/login.html
+          curl --fail --silent --show-error --retry 30 --retry-all-errors --retry-max-time 90 --connect-timeout 2 --max-time 10 --retry-delay 2 http://127.0.0.1:3000/login > /tmp/login.html
           grep -qi '<html' /tmp/login.html
