@@ -25,10 +25,12 @@ jobs:
         with:
           ref: custom
           fetch-depth: 0
+          persist-credentials: false
       - name: Mirror main and open release update PR
         id: sync
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTREAM_SYNC_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
         run: bash .github/scripts/custom-sync-upstream.sh
   validate:
     needs: propose

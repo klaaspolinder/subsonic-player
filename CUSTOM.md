@@ -28,8 +28,20 @@ The upstream Docker Hub workflows are not used by this setup.
 
 Enable Actions for this fork. In Settings → Actions → General, enable
 **Allow GitHub Actions to create and approve pull requests**.
-Workflows request their own limited permissions; no personal access token
-or Docker Hub credentials are required. Make the GHCR package public if
+Workflows request their own limited permissions. No Docker Hub credentials are required.
+
+Upstream releases can change files in `.github/workflows`. GitHub's built-in
+`GITHUB_TOKEN` cannot import these changes, even through the fork-sync API.
+Create a fine-grained personal access token with resource owner `klaaspolinder`,
+repository access limited to `klaaspolinder/subsonic-player`, and these repository
+permissions: **Contents: Read and write**, **Workflows: Read and write**.
+Store it as the repository Actions secret **UPSTREAM_SYNC_TOKEN** under
+Settings → Secrets and variables → Actions. Choose an expiration and renew the
+secret before it expires. Do not commit or paste the token into issues or chat.
+The token is used only to sync main and create upstream release branch refs;
+PR creation and validation statuses still use the built-in GITHUB_TOKEN.
+After adding the secret, run **Propose upstream releases → Run workflow** on
+`custom`. Re-running an old failed run uses its old workflow code. Make the GHCR package public if
 you want anonymous pulls (new packages may initially be private).
 
 ## Docker Compose
