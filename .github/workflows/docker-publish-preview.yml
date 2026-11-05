@@ -18,14 +18,14 @@ env:
 
 jobs:
   metadata:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.repository == 'VD39/subsonic-player' && github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/compute-build-metadata.yml
     with:
       version_policy: preview
 
   deploy:
     needs: metadata
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.repository == 'VD39/subsonic-player' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
