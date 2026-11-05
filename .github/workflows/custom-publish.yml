@@ -1,7 +1,5 @@
 name: Publish custom image
 on:
-  push:
-    branches: [custom]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +8,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   validate:
-    if: github.repository == 'klaaspolinder/subsonic-player' && github.ref == 'refs/heads/custom'
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'klaaspolinder/subsonic-player' && github.ref == 'refs/heads/custom'
     uses: ./.github/workflows/custom-ci.yml
   publish:
     needs: validate

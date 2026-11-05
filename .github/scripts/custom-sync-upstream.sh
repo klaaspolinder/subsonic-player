@@ -52,7 +52,7 @@ fi
 if [ -n "$existing" ]; then
   pr=$(jq -r .number <<< "$existing")
 else
-  body=$(printf 'Proposes official upstream release **%s** into custom.\n\nRelease notes: %s\n\nThe combined version is validated with lint, types, unit tests, a production Docker build and a container smoke test. See the **Custom release validation** status. Merge only after reviewing the changes and successful checks. Merging into custom publishes the new GHCR image. No automatic merge or server deployment is performed. If GitHub reports conflicts, resolve them before merging.\n' "$tag" "$release_url")
+  body=$(printf 'Proposes official upstream release **%s** into custom.\n\nRelease notes: %s\n\nThe combined version is validated with lint, types, unit tests, a production Docker build and a container smoke test. See the **Custom release validation** status. Merge only after reviewing the changes and successful checks. Merging into custom does not publish an image. After merge, manually run Publish custom image on custom to validate and publish the approved commit to GHCR. No automatic merge or server deployment is performed. If GitHub reports conflicts, resolve them before merging.\n' "$tag" "$release_url")
   pr_url=$(gh pr create --repo "$repo" --base custom --head "$branch" --title "Update custom to upstream release $tag" --body "$body")
   pr="${pr_url##*/}"
 fi

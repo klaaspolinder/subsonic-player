@@ -9,12 +9,14 @@ env:
 
 jobs:
   metadata:
+    if: github.repository == 'VD39/subsonic-player'
     uses: ./.github/workflows/compute-build-metadata.yml
     with:
       version_policy: release
 
   deploy:
     needs: metadata
+    if: github.repository == 'VD39/subsonic-player'
     runs-on: ubuntu-latest
 
     steps:
